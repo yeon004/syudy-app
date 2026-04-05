@@ -7,8 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="공부기록" />
     <meta name="theme-color" content="#FAFAF8" />
-    <link rel="manifest" href="manifest.json" />
-    <title>looply~✩‧₊</title>
+    <title>looply</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -110,8 +109,6 @@
         .tab-bar {
             display: flex;
             padding: 0 20px 16px;
-            position: relative;
-            z-index: 50;
         }
 
         .tab-bar-inner {
@@ -127,17 +124,12 @@
             flex: 1;
             padding: 8px 6px;
             border: none;
-
             background: none;
             border-radius: 6px;
             font-size: 13px;
             font-weight: 500;
             color: var(--text2);
             cursor: pointer;
-
-            touch-action: manipulation;
-            pointer-events: auto;
-
             font-family: 'Noto Sans KR',sans-serif;
             transition: background .15s,color .15s;
         }
@@ -358,12 +350,10 @@
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            pointer-events: auto;
         }
 
             .modal-bg.hidden {
-                display: none !important;
-                pointer-events: none !important;
+                display: none;
             }
 
         .modal {
@@ -516,7 +506,7 @@
 <body>
     <div class="header">
         <p class="header-date" id="date-label"></p>
-        <h1 class="header-title">looply~✩‧₊</h1>
+        <h1 class="header-title">looply</h1>
     </div>
     <div class="stats">
         <div class="stat-box"><p class="stat-label">오늘 완료</p><p class="stat-value" id="st-today">0<span class="stat-unit">개</span></p></div>
@@ -525,9 +515,9 @@
     </div>
     <div class="tab-bar">
         <div class="tab-bar-inner">
-            <button class="tab active" data-tab="today">오늘</button>
-            <button class="tab" data-tab="subjects">과목 관리</button>
-            <button class="tab" data-tab="calendar">달력</button>
+            <button class="tab active" data-tab="today" onclick="switchTab('today')">오늘</button>
+            <button class="tab" data-tab="subjects" onclick="switchTab('subjects')">과목 관리</button>
+            <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">달력</button>
         </div>
     </div>
     <div class="content">
@@ -560,316 +550,284 @@
     </div>
 
     <script>
+    const COLORS={
+      blue:{hex:'#4f709C',label:'파랑'},teal:{hex:'#99A98F',label:'초록'},
+      pink:{hex:'#884A39',label:'버건디'},coral:{hex:'#C38154',label:'주황'},
+      amber:{hex:'#F9E088',label:'노랑'},purple:{hex:'#A78295',label:'자주'}
+    };
+    let data={subjects:[],logs:{}};
+    let selColor='blue',curTab='today';
 
+    const fmtDate=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const todayStr=()=>fmtDate(new Date());
+    const uid=()=>Math.random().toString(36).substr(2,8);
 
-        const COLORS = {
-            blue: { hex: '#4f709C', label: '파랑' }, teal: { hex: '#99A98F', label: '초록' },
-            pink: { hex: '#884A39', label: '버건디' }, coral: { hex: '#C38154', label: '주황' },
-            amber: { hex: '#F9E088', label: '노랑' }, purple: { hex: '#A78295', label: '자주' }
-        };
-        let data = { subjects: [], logs: {} };
-        let selColor = 'blue', curTab = 'today';
+    function save(){localStorage.setItem('study-app-v3',JSON.stringify(data));}
+    function load(){
+      try{const r=localStorage.getItem('study-app-v3');if(r)data=JSON.parse(r);}catch(e){}
+      render();
+    }
 
-        const fmtDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        const todayStr = () => fmtDate(new Date());
-        const uid = () => Math.random().toString(36).substr(2, 8);
+    function switchTab(t){
+      curTab=t;
+      document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById('panel-'+t).classList.add('active');
+      render();
+    }
 
-        function save() {
-            localStorage.setItem('studyData', JSON.stringify(data));
+    function toggleCircle(sid,idx){
+      const t=todayStr();
+      if(!data.logs[t])data.logs[t]={};
+      if(!data.logs[t][sid])data.logs[t][sid]=0;
+      const cur=data.logs[t][sid];
+      data.logs[t][sid]=(idx+1===cur)?cur-1:idx+1;
+      save();render();
+    }
+
+    function toggleAll(sid){
+      const t=todayStr();
+      const s=data.subjects.find(s=>s.id===sid);
+      if(!s)return;
+      if(!data.logs[t])data.logs[t]={};
+      const cur=data.logs[t][sid]||0;
+      data.logs[t][sid]=cur>=s.target?0:s.target;
+      save();render();
+    }
+
+    function openAddModal(){
+      document.getElementById('modal-title').textContent='과목 추가';
+      document.getElementById('edit-id').value='';
+      document.getElementById('inp-name').value='';
+      document.getElementById('inp-target').value='3';
+      selColor='blue';renderColorDots();
+      document.getElementById('modal-bg').classList.remove('hidden');
+      setTimeout(()=>document.getElementById('inp-name').focus(),200);
+    }
+
+    function openEditModal(id){
+      const s=data.subjects.find(s=>s.id===id);if(!s)return;
+      document.getElementById('modal-title').textContent='과목 수정';
+      document.getElementById('edit-id').value=id;
+      document.getElementById('inp-name').value=s.name;
+      document.getElementById('inp-target').value=s.target;
+      selColor=s.color;renderColorDots();
+      document.getElementById('modal-bg').classList.remove('hidden');
+      setTimeout(()=>document.getElementById('inp-name').focus(),200);
+    }
+
+    function closeModal(e){
+      if(e&&e.target!==document.getElementById('modal-bg'))return;
+      document.getElementById('modal-bg').classList.add('hidden');
+    }
+
+    function renderColorDots(){
+      document.getElementById('color-dots').innerHTML=Object.entries(COLORS).map(([k,v])=>
+        `<div class="cdot${k===selColor?' sel':''}" data-c="${k}" style="background:${v.hex};"
+          onclick="pickColor('${k}')" title="${v.label}"></div>`
+      ).join('');
+    }
+
+    function pickColor(c){
+      selColor=c;
+      document.querySelectorAll('.cdot').forEach(d=>d.classList.toggle('sel',d.dataset.c===c));
+    }
+
+    function saveSubject(){
+      const nameEl=document.getElementById('inp-name');
+      const name=nameEl.value.trim();
+      const target=Math.max(1,parseInt(document.getElementById('inp-target').value)||3);
+      const editId=document.getElementById('edit-id').value;
+      if(!name){nameEl.classList.add('error');nameEl.focus();setTimeout(()=>nameEl.classList.remove('error'),1500);return;}
+      if(editId){
+        const s=data.subjects.find(s=>s.id===editId);
+        if(s){s.name=name;s.color=selColor;s.target=target;}
+      }else{
+        data.subjects.push({id:uid(),name,color:selColor,target});
+      }
+      save();
+      document.getElementById('modal-bg').classList.add('hidden');
+      render();
+    }
+
+    function delSubject(id){
+      if(!confirm('이 과목을 삭제할까요?'))return;
+      data.subjects=data.subjects.filter(s=>s.id!==id);
+      for(const k in data.logs)if(typeof data.logs[k]==='object')delete data.logs[k][id];
+      save();render();
+    }
+
+    function getStreak(){
+      let s=0;const today=new Date();
+      for(let i=0;i<366;i++){
+        const d=new Date(today);d.setDate(today.getDate()-i);
+        const log=data.logs[fmtDate(d)];
+        const ok=log&&typeof log==='object'&&Object.values(log).some(v=>v>0);
+        if(ok)s++;else if(i>0)break;
+      }
+      return s;
+    }
+
+    function getTodayDone(){
+      const log=data.logs[todayStr()]||{};
+      return data.subjects.filter(s=>(log[s.id]||0)>=s.target).length;
+    }
+
+    function render(){
+      document.getElementById('st-today').innerHTML=getTodayDone()+'<span class="stat-unit">개</span>';
+      document.getElementById('st-streak').innerHTML=getStreak()+'<span class="stat-unit">일</span>';
+      document.getElementById('st-subj').innerHTML=data.subjects.length+'<span class="stat-unit">개</span>';
+      if(curTab==='today')renderToday();
+      if(curTab==='subjects')renderSubjects();
+      if(curTab==='calendar')renderCalendar();
+    }
+
+    function renderToday(){
+      const t=todayStr();const log=data.logs[t]||{};
+      const el=document.getElementById('panel-today');
+      if(!data.subjects.length){
+        el.innerHTML=`<div class="empty"><div class="empty-icon">📖</div>
+          <p class="empty-title">과목을 추가해 시작해보세요!</p>
+          <p style="font-size:13px;color:var(--text2);">'과목 관리' 탭에서 추가할 수 있어요</p></div>`;
+        return;
+      }
+      const done=getTodayDone();const all=done===data.subjects.length;
+      let html=all
+        ?`<div class="alert-success"><div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0;"></div>
+           <p style="font-size:13px;font-weight:700;color:var(--success);">오늘 모든 과목 완료! 수고했어요 🎉</p></div>`
+        :`<p style="font-size:13px;color:var(--text2);margin-bottom:12px;">남은 과목 <b style="color:var(--text);">${data.subjects.length-done}개</b></p>`;
+
+      html+=data.subjects.map(s=>{
+        const c=COLORS[s.color]?.hex||'#2563EB';
+        const filled=log[s.id]||0;
+        const isDone=filled>=s.target;
+        const circles=Array.from({length:s.target},(_,i)=>
+          `<div class="hcircle" style="border-color:${c};background:${i<filled?c:'transparent'};"
+            onclick="toggleCircle('${s.id}',${i})"></div>`
+        ).join('');
+        return `<div class="s-card">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="s-dot" style="background:${c};"></div>
+            <div style="flex:1;min-width:0;">
+              <p style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</p>
+              <p style="font-size:11px;color:var(--text3);margin-top:1px;">${filled} / ${s.target}회독</p>
+            </div>
+            ${isDone
+              ?`<div class="done-badge">✓ 완료</div>`
+              :`<button onclick="toggleAll('${s.id}')" style="border:1px solid var(--border2);border-radius:var(--radius-sm);padding:5px 10px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:none;color:var(--text2);">전체 채우기</button>`}
+          </div>
+          <div class="circles-wrap">${circles}</div>
+        </div>`;
+      }).join('');
+      el.innerHTML=html;
+    }
+
+    function renderSubjects(){
+      const el=document.getElementById('panel-subjects');
+      let html='';
+      if(!data.subjects.length){
+        html+=`<div class="empty"><div class="empty-icon">📝</div><p class="empty-title">과목을 추가해보세요!</p></div>`;
+      }else{
+        html+=data.subjects.map(s=>{
+          const c=COLORS[s.color]?.hex||'#2563EB';
+          const days=Object.values(data.logs).filter(l=>typeof l==='object'&&(l[s.id]||0)>0).length;
+          const total=Object.values(data.logs).reduce((sum,l)=>sum+(typeof l==='object'?(l[s.id]||0):0),0);
+          return `<div class="s-card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div class="s-dot" style="background:${c};width:12px;height:12px;"></div>
+              <p style="flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</p>
+              <button class="icon-btn" onclick="openEditModal('${s.id}')" title="수정">✏️</button>
+              <button class="icon-btn danger" onclick="delSubject('${s.id}')" title="삭제" style="font-size:20px;font-family:sans-serif;">×</button>
+            </div>
+            <div style="display:flex;gap:16px;margin-bottom:10px;">
+              <div style="text-align:center;">
+                <p style="font-size:18px;font-weight:700;color:${c};">${days}</p>
+                <p style="font-size:11px;color:var(--text3);">학습일</p>
+              </div>
+              <div style="text-align:center;">
+                <p style="font-size:18px;font-weight:700;color:${c};">${total}</p>
+                <p style="font-size:11px;color:var(--text3);">총 회독</p>
+              </div>
+              <div style="text-align:center;">
+                <p style="font-size:18px;font-weight:700;color:${c};">${s.target}</p>
+                <p style="font-size:11px;color:var(--text3);">목표 회독</p>
+              </div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-bar" style="width:${Math.min(100,Math.round(total/Math.max(1,s.target)*10))}%;background:${c};"></div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+      html+=`<button class="btn-primary" style="margin-top:4px;" onclick="openAddModal()">+ 새 과목 추가</button>`;
+      el.innerHTML=html;
+    }
+
+    function renderCalendar(){
+      const el=document.getElementById('panel-calendar');
+      const today=new Date();const dow=today.getDay();
+      const t=todayStr();const weeks=13;
+      const dayL=['일','월','화','수','목','금','토'];
+      let grid='<div class="cal-grid"><div class="cal-day-labels">';
+      for(let d=0;d<7;d++)grid+=`<div class="cal-day-label">${[1,3,5].includes(d)?dayL[d]:''}</div>`;
+      grid+='</div>';
+      for(let w=0;w<weeks;w++){
+        let ml='';
+        for(let d=0;d<7;d++){
+          const db=(weeks-1-w)*7+(dow-d);if(db<0)continue;
+          const dt=new Date(today);dt.setDate(today.getDate()-db);
+          if(dt.getDate()===1){ml=(dt.getMonth()+1)+'월';break;}
         }
-        function load() {
-            const saved = localStorage.getItem('studyData');
-            if (saved) {
-                data = JSON.parse(saved);
-            } else {
-                data = { subjects: [], logs: {} };
-            }
+        grid+=`<div class="cal-col"><div class="cal-month">${ml}</div>`;
+        for(let d=0;d<7;d++){
+          const db=(weeks-1-w)*7+(dow-d);
+          if(db<0){grid+='<div style="width:14px;height:14px;"></div>';continue;}
+          const dt=new Date(today);dt.setDate(today.getDate()-db);
+          const ds=fmtDate(dt);
+          const log=data.logs[ds];
+          const ok=log&&typeof log==='object'&&Object.values(log).some(v=>v>0);
+          grid+=`<div class="cal-cell${ok?' has':''}${ds===t?' today':''}" title="${ds}"></div>`;
         }
-        function switchTab(t) {
-            curTab = t;
-            document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById('panel-' + t).classList.add('active');
-            render();
-        }
+        grid+='</div>';
+      }
+      grid+='</div>';
 
-        function toggleCircle(sid, idx) {
-            const t = todayStr();
-            if (!data.logs[t]) data.logs[t] = {};
-            if (!data.logs[t][sid]) data.logs[t][sid] = 0;
-            const cur = data.logs[t][sid];
-            data.logs[t][sid] = (idx + 1 === cur) ? cur - 1 : idx + 1;
-            save(); render();
-        }
+      const legend=`<div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
+        <div class="cal-cell" style="width:12px;height:12px;"></div>
+        <span style="font-size:11px;color:var(--text2);">없음</span>
+        <div class="cal-cell has" style="width:12px;height:12px;margin-left:6px;"></div>
+        <span style="font-size:11px;color:var(--text2);">공부함</span>
+        <div class="cal-cell today" style="width:12px;height:12px;margin-left:6px;"></div>
+        <span style="font-size:11px;color:var(--text2);">오늘</span>
+      </div>`;
 
-        function toggleAll(sid) {
-            const t = todayStr();
-            const s = data.subjects.find(s => s.id === sid);
-            if (!s) return;
-            if (!data.logs[t]) data.logs[t] = {};
-            const cur = data.logs[t][sid] || 0;
-            data.logs[t][sid] = cur >= s.target ? 0 : s.target;
-            save(); render();
-        }
+      let stats='';
+      if(data.subjects.length){
+        const maxD=Math.max(...data.subjects.map(s=>
+          Object.values(data.logs).filter(l=>typeof l==='object'&&(l[s.id]||0)>0).length),1);
+        stats=`<div style="margin-top:20px;"><p class="section-title">과목별 누적 학습일</p>
+          ${data.subjects.map(s=>{
+            const c=COLORS[s.color]?.hex||'#2563EB';
+            const cnt=Object.values(data.logs).filter(l=>typeof l==='object'&&(l[s.id]||0)>0).length;
+            const tot=Object.values(data.logs).reduce((a,l)=>a+(typeof l==='object'?(l[s.id]||0):0),0);
+            return `<div style="margin-bottom:12px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;"></div>
+                <span style="font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</span>
+                <span style="font-size:12px;color:var(--text2);flex-shrink:0;">${cnt}일 · 총 ${tot}회독</span>
+              </div>
+              <div class="prog-wrap"><div class="prog-bar" style="width:${Math.round(cnt/maxD*100)}%;background:${c};"></div></div>
+            </div>`;
+          }).join('')}</div>`;
+      }
 
-        function openAddModal() {
-            document.getElementById('modal-title').textContent = '과목 추가';
-            document.getElementById('edit-id').value = '';
-            document.getElementById('inp-name').value = '';
-            document.getElementById('inp-target').value = '3';
-            selColor = 'blue'; renderColorDots();
-            document.getElementById('modal-bg').classList.remove('hidden');
-            setTimeout(() => document.getElementById('inp-name').focus(), 200);
-        }
+      el.innerHTML=`<p style="font-size:13px;color:var(--text2);margin-bottom:10px;">최근 ${weeks}주 학습 현황</p>
+        ${grid}${legend}${stats}`;
+    }
 
-        function openEditModal(id) {
-            const s = data.subjects.find(s => s.id === id); if (!s) return;
-            document.getElementById('modal-title').textContent = '과목 수정';
-            document.getElementById('edit-id').value = id;
-            document.getElementById('inp-name').value = s.name;
-            document.getElementById('inp-target').value = s.target;
-            selColor = s.color; renderColorDots();
-            document.getElementById('modal-bg').classList.remove('hidden');
-            setTimeout(() => document.getElementById('inp-name').focus(), 200);
-        }
-
-        function closeModal(e) {
-            const bg = document.getElementById('modal-bg');
-
-            if (e && e.target !== bg) return;
-
-            bg.classList.add('hidden');
-            bg.style.pointerEvents = 'none';
-        }
-
-        function renderColorDots() {
-            document.getElementById('color-dots').innerHTML = Object.entries(COLORS).map(([k, v]) =>
-                `<div class="cdot${k === selColor ? ' sel' : ''}" data-c="${k}" style="background:${v.hex};"
-                      onclick="pickColor('${k}')" title="${v.label}"></div>`
-            ).join('');
-        }
-
-        function pickColor(c) {
-            selColor = c;
-            document.querySelectorAll('.cdot').forEach(d => d.classList.toggle('sel', d.dataset.c === c));
-        }
-
-        function saveSubject() {
-            const nameEl = document.getElementById('inp-name');
-            const name = nameEl.value.trim();
-            const target = Math.max(1, parseInt(document.getElementById('inp-target').value) || 3);
-            const editId = document.getElementById('edit-id').value;
-            if (!name) { nameEl.classList.add('error'); nameEl.focus(); setTimeout(() => nameEl.classList.remove('error'), 1500); return; }
-            if (editId) {
-                const s = data.subjects.find(s => s.id === editId);
-                if (s) { s.name = name; s.color = selColor; s.target = target; }
-            } else {
-                data.subjects.push({ id: uid(), name, color: selColor, target });
-            }
-            save();
-            document.getElementById('modal-bg').classList.add('hidden');
-            render();
-        }
-
-        function delSubject(id) {
-            if (!confirm('이 과목을 삭제할까요?')) return;
-            data.subjects = data.subjects.filter(s => s.id !== id);
-            for (const k in data.logs) if (typeof data.logs[k] === 'object') delete data.logs[k][id];
-            save(); render();
-        }
-
-        function getStreak() {
-            let s = 0; const today = new Date();
-            for (let i = 0; i < 366; i++) {
-                const d = new Date(today); d.setDate(today.getDate() - i);
-                const log = data.logs[fmtDate(d)];
-                const ok = log && typeof log === 'object' && Object.values(log).some(v => v > 0);
-                if (ok) s++; else if (i > 0) break;
-            }
-            return s;
-        }
-
-        function getTodayDone() {
-            const log = data.logs[todayStr()] || {};
-            return data.subjects.filter(s => (log[s.id] || 0) >= s.target).length;
-        }
-
-        function render() {
-            document.getElementById('st-today').innerHTML = getTodayDone() + '<span class="stat-unit">개</span>';
-            document.getElementById('st-streak').innerHTML = getStreak() + '<span class="stat-unit">일</span>';
-            document.getElementById('st-subj').innerHTML = data.subjects.length + '<span class="stat-unit">개</span>';
-            if (curTab === 'today') renderToday();
-            if (curTab === 'subjects') renderSubjects();
-            if (curTab === 'calendar') renderCalendar();
-        }
-
-        function renderToday() {
-            const t = todayStr(); const log = data.logs[t] || {};
-            const el = document.getElementById('panel-today');
-            if (!data.subjects.length) {
-                el.innerHTML = `<div class="empty"><div class="empty-icon">📖</div>
-                      <p class="empty-title">과목을 추가해 시작해보세요!</p>
-                      <p style="font-size:13px;color:var(--text2);">'과목 관리' 탭에서 추가할 수 있어요</p></div>`;
-                return;
-            }
-            const done = getTodayDone(); const all = done === data.subjects.length;
-            let html = all
-                ? `<div class="alert-success"><div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0;"></div>
-                       <p style="font-size:13px;font-weight:700;color:var(--success);">오늘 모든 과목 완료! 수고했어요 🎉</p></div>`
-                : `<p style="font-size:13px;color:var(--text2);margin-bottom:12px;">남은 과목 <b style="color:var(--text);">${data.subjects.length - done}개</b></p>`;
-
-            html += data.subjects.map(s => {
-                const c = COLORS[s.color]?.hex || '#2563EB';
-                const filled = log[s.id] || 0;
-                const isDone = filled >= s.target;
-                const circles = Array.from({ length: s.target }, (_, i) =>
-                    `<div class="hcircle" style="border-color:${c};background:${i < filled ? c : 'transparent'};"
-                        onclick="toggleCircle('${s.id}',${i})"></div>`
-                ).join('');
-                return `<div class="s-card">
-                      <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="s-dot" style="background:${c};"></div>
-                        <div style="flex:1;min-width:0;">
-                          <p style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</p>
-                          <p style="font-size:11px;color:var(--text3);margin-top:1px;">${filled} / ${s.target}회독</p>
-                        </div>
-                        ${isDone
-                        ? `<div class="done-badge">✓ 완료</div>`
-                        : `<button onclick="toggleAll('${s.id}')" style="border:1px solid var(--border2);border-radius:var(--radius-sm);padding:5px 10px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:none;color:var(--text2);">전체 채우기</button>`}
-                      </div>
-                      <div class="circles-wrap">${circles}</div>
-                    </div>`;
-            }).join('');
-            el.innerHTML = html;
-        }
-
-        function renderSubjects() {
-            const el = document.getElementById('panel-subjects');
-            let html = '';
-            if (!data.subjects.length) {
-                html += `<div class="empty"><div class="empty-icon">📝</div><p class="empty-title">과목을 추가해보세요!</p></div>`;
-            } else {
-                html += data.subjects.map(s => {
-                    const c = COLORS[s.color]?.hex || '#2563EB';
-                    const days = Object.values(data.logs).filter(l => typeof l === 'object' && (l[s.id] || 0) > 0).length;
-                    const total = Object.values(data.logs).reduce((sum, l) => sum + (typeof l === 'object' ? (l[s.id] || 0) : 0), 0);
-                    return `<div class="s-card">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                          <div class="s-dot" style="background:${c};width:12px;height:12px;"></div>
-                          <p style="flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</p>
-                          <button class="icon-btn" onclick="openEditModal('${s.id}')" title="수정">✏️</button>
-                          <button class="icon-btn danger" onclick="delSubject('${s.id}')" title="삭제" style="font-size:20px;font-family:sans-serif;">×</button>
-                        </div>
-                        <div style="display:flex;gap:16px;margin-bottom:10px;">
-                          <div style="text-align:center;">
-                            <p style="font-size:18px;font-weight:700;color:${c};">${days}</p>
-                            <p style="font-size:11px;color:var(--text3);">학습일</p>
-                          </div>
-                          <div style="text-align:center;">
-                            <p style="font-size:18px;font-weight:700;color:${c};">${total}</p>
-                            <p style="font-size:11px;color:var(--text3);">총 회독</p>
-                          </div>
-                          <div style="text-align:center;">
-                            <p style="font-size:18px;font-weight:700;color:${c};">${s.target}</p>
-                            <p style="font-size:11px;color:var(--text3);">목표 회독</p>
-                          </div>
-                        </div>
-                        <div class="prog-wrap">
-                          <div class="prog-bar" style="width:${Math.min(100, Math.round(total / Math.max(1, s.target) * 10))}%;background:${c};"></div>
-                        </div>
-                      </div>`;
-                }).join('');
-            }
-            html += `<button class="btn-primary" style="margin-top:4px;" onclick="openAddModal()">+ 새 과목 추가</button>`;
-            el.innerHTML = html;
-        }
-
-        function renderCalendar() {
-            const el = document.getElementById('panel-calendar');
-            const today = new Date(); const dow = today.getDay();
-            const t = todayStr(); const weeks = 13;
-            const dayL = ['일', '월', '화', '수', '목', '금', '토'];
-            let grid = '<div class="cal-grid"><div class="cal-day-labels">';
-            for (let d = 0; d < 7; d++)grid += `<div class="cal-day-label">${[1, 3, 5].includes(d) ? dayL[d] : ''}</div>`;
-            grid += '</div>';
-            for (let w = 0; w < weeks; w++) {
-                let ml = '';
-                for (let d = 0; d < 7; d++) {
-                    const db = (weeks - 1 - w) * 7 + (dow - d); if (db < 0) continue;
-                    const dt = new Date(today); dt.setDate(today.getDate() - db);
-                    if (dt.getDate() === 1) { ml = (dt.getMonth() + 1) + '월'; break; }
-                }
-                grid += `<div class="cal-col"><div class="cal-month">${ml}</div>`;
-                for (let d = 0; d < 7; d++) {
-                    const db = (weeks - 1 - w) * 7 + (dow - d);
-                    if (db < 0) { grid += '<div style="width:14px;height:14px;"></div>'; continue; }
-                    const dt = new Date(today); dt.setDate(today.getDate() - db);
-                    const ds = fmtDate(dt);
-                    const log = data.logs[ds];
-                    const ok = log && typeof log === 'object' && Object.values(log).some(v => v > 0);
-                    grid += `<div class="cal-cell${ok ? ' has' : ''}${ds === t ? ' today' : ''}" title="${ds}"></div>`;
-                }
-                grid += '</div>';
-            }
-            grid += '</div>';
-
-            const legend = `<div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
-                    <div class="cal-cell" style="width:12px;height:12px;"></div>
-                    <span style="font-size:11px;color:var(--text2);">없음</span>
-                    <div class="cal-cell has" style="width:12px;height:12px;margin-left:6px;"></div>
-                    <span style="font-size:11px;color:var(--text2);">공부함</span>
-                    <div class="cal-cell today" style="width:12px;height:12px;margin-left:6px;"></div>
-                    <span style="font-size:11px;color:var(--text2);">오늘</span>
-                  </div>`;
-
-            let stats = '';
-            if (data.subjects.length) {
-                const maxD = Math.max(...data.subjects.map(s =>
-                    Object.values(data.logs).filter(l => typeof l === 'object' && (l[s.id] || 0) > 0).length), 1);
-                stats = `<div style="margin-top:20px;"><p class="section-title">과목별 누적 학습일</p>
-                      ${data.subjects.map(s => {
-                    const c = COLORS[s.color]?.hex || '#2563EB';
-                    const cnt = Object.values(data.logs).filter(l => typeof l === 'object' && (l[s.id] || 0) > 0).length;
-                    const tot = Object.values(data.logs).reduce((a, l) => a + (typeof l === 'object' ? (l[s.id] || 0) : 0), 0);
-                    return `<div style="margin-bottom:12px;">
-                          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                            <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;"></div>
-                            <span style="font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</span>
-                            <span style="font-size:12px;color:var(--text2);flex-shrink:0;">${cnt}일 · 총 ${tot}회독</span>
-                          </div>
-                          <div class="prog-wrap"><div class="prog-bar" style="width:${Math.round(cnt / maxD * 100)}%;background:${c};"></div></div>
-                        </div>`;
-                }).join('')}</div>`;
-            }
-
-            el.innerHTML = `<p style="font-size:13px;color:var(--text2);margin-bottom:10px;">최근 ${weeks}주 학습 현황</p>
-                    ${grid}${legend}${stats}`;
-        }
-
-        document.getElementById('date-label').textContent =
-            new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-        load();
-        render();
+    document.getElementById('date-label').textContent=
+      new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+    load();
     </script>
-    <script>
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("sw.js");
-        }
-    </script>
-    <script>
-        // 모바일 터치 디버깅용 로그
-        document.addEventListener('click', function (e) {
-            console.log('click:', e.target);
-        });
-
-        document.addEventListener('touchstart', function (e) {
-            console.log('touchstart:', e.target);
-        });
-
-        document.addEventListener('touchend', function (e) {
-            console.log('touchend:', e.target);
-        });
-    </script>
-
 </body>
 </html>
