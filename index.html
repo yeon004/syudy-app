@@ -110,6 +110,8 @@
         .tab-bar {
             display: flex;
             padding: 0 20px 16px;
+            position: relative;
+            z-index: 50;
         }
 
         .tab-bar-inner {
@@ -131,6 +133,8 @@
             font-weight: 500;
             color: var(--text2);
             cursor: pointer;
+            touch-action: manipulation;
+            pointer-events: auto;
             font-family: 'Noto Sans KR',sans-serif;
             transition: background .15s,color .15s;
         }
@@ -354,7 +358,7 @@
         }
 
             .modal-bg.hidden {
-                display: none;
+                display: none !important;
                 pointer-events: none;
             }
 
