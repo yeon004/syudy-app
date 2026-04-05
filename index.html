@@ -127,14 +127,17 @@
             flex: 1;
             padding: 8px 6px;
             border: none;
+
             background: none;
             border-radius: 6px;
             font-size: 13px;
             font-weight: 500;
             color: var(--text2);
             cursor: pointer;
+
             touch-action: manipulation;
             pointer-events: auto;
+
             font-family: 'Noto Sans KR',sans-serif;
             transition: background .15s,color .15s;
         }
@@ -355,11 +358,12 @@
             display: flex;
             align-items: flex-end;
             justify-content: center;
+            pointer-events: auto;
         }
 
             .modal-bg.hidden {
                 display: none !important;
-                pointer-events: none;
+                pointer-events: none !important;
             }
 
         .modal {
@@ -630,8 +634,12 @@
         }
 
         function closeModal(e) {
-            if (e && e.target !== document.getElementById('modal-bg')) return;
-            document.getElementById('modal-bg').classList.add('hidden');
+            const bg = document.getElementById('modal-bg');
+
+            if (e && e.target !== bg) return;
+
+            bg.classList.add('hidden');
+            bg.style.pointerEvents = 'none';   
         }
 
         function renderColorDots() {
