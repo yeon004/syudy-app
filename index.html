@@ -508,13 +508,44 @@
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "...",
-            authDomain: "...",
-            projectId: "...",
+            apiKey: "여기에_API키",
+            authDomain: "여기에",
+            projectId: "여기에",
+            storageBucket: "여기에",
+            messagingSenderId: "여기에",
+            appId: "여기에"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        // 기존 함수 수정 필요
+        window.login = async function () {
+            const pwd = prompt("암호를 입력하세요");
+            if (!pwd) return;
+
+            window.userId = "user_" + pwd;
+            await loadFromCloud();
+        };
+
+        window.save = async function () {
+            if (!window.userId) return;
+            await setDoc(doc(db, "study", window.userId), window.data);
+        };
+
+        window.loadFromCloud = async function () {
+            if (!window.userId) return;
+
+            const docSnap = await getDoc(doc(db, "study", window.userId));
+
+            if (docSnap.exists()) {
+                window.data = docSnap.data();
+            } else {
+                window.data = { subjects: [], logs: {} };
+            }
+
+            render();
+        };
     </script>
 </head>
 <body>
