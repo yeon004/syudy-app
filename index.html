@@ -503,8 +503,19 @@
             transition: width .3s;
         }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "...",
+            authDomain: "...",
+            projectId: "...",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+    </script>
 </head>
 <body>
     <div class="header">
