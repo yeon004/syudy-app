@@ -1,7 +1,7 @@
 {
-  "name": "Looply",
-  "short_name": "Looply",
-  "start_url": ".",
+  "name": "looply",
+  "short_name": "looply",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#FAFAF8",
   "theme_color": "#FAFAF8",
