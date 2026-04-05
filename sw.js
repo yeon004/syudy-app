@@ -1,9 +1,20 @@
 const CACHE_NAME = "looply-v1";
 
-self.addEventListener('install', (event) => {
-    console.log('Service Worker installed');
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        "/",
+        "/index.html"
+      ]);
+    })
+  );
 });
 
-self.addEventListener('fetch', (event) => {
-    // 그냥 통과 (기본 네트워크 요청)
+self.addEventListener("fetch", (e) => {
+  e.respondWith(
+    caches.match(e.request).then((res) => {
+      return res || fetch(e.request);
+    })
+  );
 });
