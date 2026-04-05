@@ -503,50 +503,6 @@
             transition: width .3s;
         }
     </style>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "여기에_API키",
-            authDomain: "여기에",
-            projectId: "여기에",
-            storageBucket: "여기에",
-            messagingSenderId: "여기에",
-            appId: "여기에"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // 기존 함수 수정 필요
-        window.login = async function () {
-            const pwd = prompt("암호를 입력하세요");
-            if (!pwd) return;
-
-            window.userId = "user_" + pwd;
-            await loadFromCloud();
-        };
-
-        window.save = async function () {
-            if (!window.userId) return;
-            await setDoc(doc(db, "study", window.userId), window.data);
-        };
-
-        window.loadFromCloud = async function () {
-            if (!window.userId) return;
-
-            const docSnap = await getDoc(doc(db, "study", window.userId));
-
-            if (docSnap.exists()) {
-                window.data = docSnap.data();
-            } else {
-                window.data = { subjects: [], logs: {} };
-            }
-
-            render();
-        };
-    </script>
 </head>
 <body>
     <div class="header">
@@ -595,30 +551,8 @@
     </div>
 
     <script>
-        // Firebase 설정
-        const firebaseConfig = {
-            apiKey: "여기에_API키",
-            authDomain: "여기에",
-            projectId: "여기에",
-            storageBucket: "여기에",
-            messagingSenderId: "여기에",
-            appId: "여기에"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        let userId = null;
-        let userId = null;
-        let isLoaded = false;  
-
-        function login() {
-            const pwd = prompt("암호를 입력하세요");
-            if (!pwd) return;
-
-            userId = "user_" + pwd;
-            loadFromCloud();
-        }
+        
+        
         const COLORS = {
             blue: { hex: '#4f709C', label: '파랑' }, teal: { hex: '#99A98F', label: '초록' },
             pink: { hex: '#884A39', label: '버건디' }, coral: { hex: '#C38154', label: '주황' },
@@ -631,27 +565,17 @@
         const todayStr = () => fmtDate(new Date());
         const uid = () => Math.random().toString(36).substr(2, 8);
 
-        async function save() {
-            if (!userId || !isLoaded) return;  
-
-            await db.collection("study").doc(userId).set(data, { merge: true }); 
+        function save() {
+            localStorage.setItem('studyData', JSON.stringify(data));
         }
-        async function loadFromCloud() {
-            if (!userId) return;
-
-            const doc = await db.collection("study").doc(userId).get();
-
-            if (doc.exists) {
-                data = doc.data();
+        function load() {
+            const saved = localStorage.getItem('studyData');
+            if (saved) {
+                data = JSON.parse(saved);
             } else {
                 data = { subjects: [], logs: {} };
             }
-
-            isLoaded = true;
-
-            render();
         }
-
         function switchTab(t) {
             curTab = t;
             document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
@@ -911,7 +835,8 @@
 
         document.getElementById('date-label').textContent =
             new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-        login();
+        load();
+        render();
     </script>
     <script>
         if ("serviceWorker" in navigator) {
