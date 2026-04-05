@@ -525,9 +525,9 @@
     </div>
     <div class="tab-bar">
         <div class="tab-bar-inner">
-            <button class="tab active" data-tab="today" onclick="switchTab('today')">오늘</button>
-            <button class="tab" data-tab="subjects" onclick="switchTab('subjects')">과목 관리</button>
-            <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">달력</button>
+            <button class="tab active" data-tab="today">오늘</button>
+            <button class="tab" data-tab="subjects">과목 관리</button>
+            <button class="tab" data-tab="calendar">달력</button>
         </div>
     </div>
     <div class="content">
@@ -560,8 +560,8 @@
     </div>
 
     <script>
-        
-        
+
+
         const COLORS = {
             blue: { hex: '#4f709C', label: '파랑' }, teal: { hex: '#99A98F', label: '초록' },
             pink: { hex: '#884A39', label: '버건디' }, coral: { hex: '#C38154', label: '주황' },
@@ -639,13 +639,13 @@
             if (e && e.target !== bg) return;
 
             bg.classList.add('hidden');
-            bg.style.pointerEvents = 'none';   
+            bg.style.pointerEvents = 'none';
         }
 
         function renderColorDots() {
             document.getElementById('color-dots').innerHTML = Object.entries(COLORS).map(([k, v]) =>
                 `<div class="cdot${k === selColor ? ' sel' : ''}" data-c="${k}" style="background:${v.hex};"
-                  onclick="pickColor('${k}')" title="${v.label}"></div>`
+                      onclick="pickColor('${k}')" title="${v.label}"></div>`
             ).join('');
         }
 
@@ -708,14 +708,14 @@
             const el = document.getElementById('panel-today');
             if (!data.subjects.length) {
                 el.innerHTML = `<div class="empty"><div class="empty-icon">📖</div>
-                  <p class="empty-title">과목을 추가해 시작해보세요!</p>
-                  <p style="font-size:13px;color:var(--text2);">'과목 관리' 탭에서 추가할 수 있어요</p></div>`;
+                      <p class="empty-title">과목을 추가해 시작해보세요!</p>
+                      <p style="font-size:13px;color:var(--text2);">'과목 관리' 탭에서 추가할 수 있어요</p></div>`;
                 return;
             }
             const done = getTodayDone(); const all = done === data.subjects.length;
             let html = all
                 ? `<div class="alert-success"><div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0;"></div>
-                   <p style="font-size:13px;font-weight:700;color:var(--success);">오늘 모든 과목 완료! 수고했어요 🎉</p></div>`
+                       <p style="font-size:13px;font-weight:700;color:var(--success);">오늘 모든 과목 완료! 수고했어요 🎉</p></div>`
                 : `<p style="font-size:13px;color:var(--text2);margin-bottom:12px;">남은 과목 <b style="color:var(--text);">${data.subjects.length - done}개</b></p>`;
 
             html += data.subjects.map(s => {
@@ -724,21 +724,21 @@
                 const isDone = filled >= s.target;
                 const circles = Array.from({ length: s.target }, (_, i) =>
                     `<div class="hcircle" style="border-color:${c};background:${i < filled ? c : 'transparent'};"
-                    onclick="toggleCircle('${s.id}',${i})"></div>`
+                        onclick="toggleCircle('${s.id}',${i})"></div>`
                 ).join('');
                 return `<div class="s-card">
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="s-dot" style="background:${c};"></div>
-                    <div style="flex:1;min-width:0;">
-                      <p style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</p>
-                      <p style="font-size:11px;color:var(--text3);margin-top:1px;">${filled} / ${s.target}회독</p>
-                    </div>
-                    ${isDone
+                      <div style="display:flex;align-items:center;gap:10px;">
+                        <div class="s-dot" style="background:${c};"></div>
+                        <div style="flex:1;min-width:0;">
+                          <p style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</p>
+                          <p style="font-size:11px;color:var(--text3);margin-top:1px;">${filled} / ${s.target}회독</p>
+                        </div>
+                        ${isDone
                         ? `<div class="done-badge">✓ 완료</div>`
                         : `<button onclick="toggleAll('${s.id}')" style="border:1px solid var(--border2);border-radius:var(--radius-sm);padding:5px 10px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:none;color:var(--text2);">전체 채우기</button>`}
-                  </div>
-                  <div class="circles-wrap">${circles}</div>
-                </div>`;
+                      </div>
+                      <div class="circles-wrap">${circles}</div>
+                    </div>`;
             }).join('');
             el.innerHTML = html;
         }
@@ -754,30 +754,30 @@
                     const days = Object.values(data.logs).filter(l => typeof l === 'object' && (l[s.id] || 0) > 0).length;
                     const total = Object.values(data.logs).reduce((sum, l) => sum + (typeof l === 'object' ? (l[s.id] || 0) : 0), 0);
                     return `<div class="s-card">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                      <div class="s-dot" style="background:${c};width:12px;height:12px;"></div>
-                      <p style="flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</p>
-                      <button class="icon-btn" onclick="openEditModal('${s.id}')" title="수정">✏️</button>
-                      <button class="icon-btn danger" onclick="delSubject('${s.id}')" title="삭제" style="font-size:20px;font-family:sans-serif;">×</button>
-                    </div>
-                    <div style="display:flex;gap:16px;margin-bottom:10px;">
-                      <div style="text-align:center;">
-                        <p style="font-size:18px;font-weight:700;color:${c};">${days}</p>
-                        <p style="font-size:11px;color:var(--text3);">학습일</p>
-                      </div>
-                      <div style="text-align:center;">
-                        <p style="font-size:18px;font-weight:700;color:${c};">${total}</p>
-                        <p style="font-size:11px;color:var(--text3);">총 회독</p>
-                      </div>
-                      <div style="text-align:center;">
-                        <p style="font-size:18px;font-weight:700;color:${c};">${s.target}</p>
-                        <p style="font-size:11px;color:var(--text3);">목표 회독</p>
-                      </div>
-                    </div>
-                    <div class="prog-wrap">
-                      <div class="prog-bar" style="width:${Math.min(100, Math.round(total / Math.max(1, s.target) * 10))}%;background:${c};"></div>
-                    </div>
-                  </div>`;
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                          <div class="s-dot" style="background:${c};width:12px;height:12px;"></div>
+                          <p style="flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</p>
+                          <button class="icon-btn" onclick="openEditModal('${s.id}')" title="수정">✏️</button>
+                          <button class="icon-btn danger" onclick="delSubject('${s.id}')" title="삭제" style="font-size:20px;font-family:sans-serif;">×</button>
+                        </div>
+                        <div style="display:flex;gap:16px;margin-bottom:10px;">
+                          <div style="text-align:center;">
+                            <p style="font-size:18px;font-weight:700;color:${c};">${days}</p>
+                            <p style="font-size:11px;color:var(--text3);">학습일</p>
+                          </div>
+                          <div style="text-align:center;">
+                            <p style="font-size:18px;font-weight:700;color:${c};">${total}</p>
+                            <p style="font-size:11px;color:var(--text3);">총 회독</p>
+                          </div>
+                          <div style="text-align:center;">
+                            <p style="font-size:18px;font-weight:700;color:${c};">${s.target}</p>
+                            <p style="font-size:11px;color:var(--text3);">목표 회독</p>
+                          </div>
+                        </div>
+                        <div class="prog-wrap">
+                          <div class="prog-bar" style="width:${Math.min(100, Math.round(total / Math.max(1, s.target) * 10))}%;background:${c};"></div>
+                        </div>
+                      </div>`;
                 }).join('');
             }
             html += `<button class="btn-primary" style="margin-top:4px;" onclick="openAddModal()">+ 새 과목 추가</button>`;
@@ -814,36 +814,36 @@
             grid += '</div>';
 
             const legend = `<div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
-                <div class="cal-cell" style="width:12px;height:12px;"></div>
-                <span style="font-size:11px;color:var(--text2);">없음</span>
-                <div class="cal-cell has" style="width:12px;height:12px;margin-left:6px;"></div>
-                <span style="font-size:11px;color:var(--text2);">공부함</span>
-                <div class="cal-cell today" style="width:12px;height:12px;margin-left:6px;"></div>
-                <span style="font-size:11px;color:var(--text2);">오늘</span>
-              </div>`;
+                    <div class="cal-cell" style="width:12px;height:12px;"></div>
+                    <span style="font-size:11px;color:var(--text2);">없음</span>
+                    <div class="cal-cell has" style="width:12px;height:12px;margin-left:6px;"></div>
+                    <span style="font-size:11px;color:var(--text2);">공부함</span>
+                    <div class="cal-cell today" style="width:12px;height:12px;margin-left:6px;"></div>
+                    <span style="font-size:11px;color:var(--text2);">오늘</span>
+                  </div>`;
 
             let stats = '';
             if (data.subjects.length) {
                 const maxD = Math.max(...data.subjects.map(s =>
                     Object.values(data.logs).filter(l => typeof l === 'object' && (l[s.id] || 0) > 0).length), 1);
                 stats = `<div style="margin-top:20px;"><p class="section-title">과목별 누적 학습일</p>
-                  ${data.subjects.map(s => {
+                      ${data.subjects.map(s => {
                     const c = COLORS[s.color]?.hex || '#2563EB';
                     const cnt = Object.values(data.logs).filter(l => typeof l === 'object' && (l[s.id] || 0) > 0).length;
                     const tot = Object.values(data.logs).reduce((a, l) => a + (typeof l === 'object' ? (l[s.id] || 0) : 0), 0);
                     return `<div style="margin-bottom:12px;">
-                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                        <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;"></div>
-                        <span style="font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</span>
-                        <span style="font-size:12px;color:var(--text2);flex-shrink:0;">${cnt}일 · 총 ${tot}회독</span>
-                      </div>
-                      <div class="prog-wrap"><div class="prog-bar" style="width:${Math.round(cnt / maxD * 100)}%;background:${c};"></div></div>
-                    </div>`;
+                          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;"></div>
+                            <span style="font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</span>
+                            <span style="font-size:12px;color:var(--text2);flex-shrink:0;">${cnt}일 · 총 ${tot}회독</span>
+                          </div>
+                          <div class="prog-wrap"><div class="prog-bar" style="width:${Math.round(cnt / maxD * 100)}%;background:${c};"></div></div>
+                        </div>`;
                 }).join('')}</div>`;
             }
 
             el.innerHTML = `<p style="font-size:13px;color:var(--text2);margin-bottom:10px;">최근 ${weeks}주 학습 현황</p>
-                ${grid}${legend}${stats}`;
+                    ${grid}${legend}${stats}`;
         }
 
         document.getElementById('date-label').textContent =
@@ -856,5 +856,20 @@
             navigator.serviceWorker.register("sw.js");
         }
     </script>
+    <script>
+        // 모바일 터치 디버깅용 로그
+        document.addEventListener('click', function (e) {
+            console.log('click:', e.target);
+        });
+
+        document.addEventListener('touchstart', function (e) {
+            console.log('touchstart:', e.target);
+        });
+
+        document.addEventListener('touchend', function (e) {
+            console.log('touchend:', e.target);
+        });
+    </script>
+
 </body>
 </html>
