@@ -567,6 +567,8 @@
         const db = firebase.firestore();
 
         let userId = null;
+        let userId = null;
+        let isLoaded = false;  
 
         function login() {
             const pwd = prompt("암호를 입력하세요");
@@ -588,9 +590,9 @@
         const uid = () => Math.random().toString(36).substr(2, 8);
 
         async function save() {
-            if (!userId) return;
+            if (!userId || !isLoaded) return;  
 
-            await db.collection("study").doc(userId).set(data);
+            await db.collection("study").doc(userId).set(data, { merge: true }); 
         }
         async function loadFromCloud() {
             if (!userId) return;
@@ -602,6 +604,8 @@
             } else {
                 data = { subjects: [], logs: {} };
             }
+
+            isLoaded = true;
 
             render();
         }
