@@ -530,7 +530,7 @@
 
     <!-- Modal -->
     <div class="modal-bg hidden" id="modal-bg" onclick="closeModal(event)">
-        <div class="modal">
+        <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-handle"></div>
             <p class="modal-title" id="modal-title">과목 추가</p>
             <input type="hidden" id="edit-id" value="" />
